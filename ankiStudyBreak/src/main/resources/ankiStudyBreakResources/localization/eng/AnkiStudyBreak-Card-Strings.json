@@ -1,0 +1,6 @@
+{
+  "ankiStudyBreak:YesStudied": {
+    "NAME": "Did you finish studying?",
+    "DESCRIPTION": "Click me to continue. Anki cards left to study: !M!"
+  }
+}

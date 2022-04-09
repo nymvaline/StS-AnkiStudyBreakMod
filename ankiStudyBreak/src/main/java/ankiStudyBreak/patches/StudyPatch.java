@@ -23,23 +23,31 @@ import ankiStudyBreak.util.AnkiConnectRequest;
 // StudyCheckPatch triggers when the special card is selected, and will continue to trigger when it's selected.
 public class StudyPatch {
     public static void Postfix(AbstractDungeon __instance, SaveFile saveFile) {
-        boolean isLoadingPostCombatSave = CardCrawlGame.loadingSave && saveFile != null && saveFile.post_combat;
-        if (__instance.nextRoom != null && !isLoadingPostCombatSave && AnkiStudyBreak.numCardsToStudy>0) {
-            int baseline = AnkiConnectRequest.getCardsStudied();
-            if((__instance.nextRoom.room instanceof EventRoom)
-                    || (__instance.nextRoom.room instanceof RestRoom)
-                    || (__instance.nextRoom.room instanceof MonsterRoom)
-                    || (__instance.nextRoom.room instanceof ShopRoom)
-                    || (__instance.nextRoom.room instanceof TreasureRoom)) {
-                CardGroup group = new CardGroup(CardGroup.CardGroupType.UNSPECIFIED);
-                AbstractCard card = new YesStudied(baseline, AnkiStudyBreak.numCardsToStudy);
-                group.addToBottom(card);
-                int count = 0;
-                __instance.gridSelectScreen.open(group, 1, "", false,
-                        false,
-                        false,
-                        false);
+        if(AnkiStudyBreak.studyIntervalPos >= AnkiStudyBreak.studyInterval) {
+            AnkiStudyBreak.studyIntervalPos = 0;
+        }
+        if(AnkiStudyBreak.studyIntervalPos == 0) {
+            boolean isLoadingPostCombatSave = CardCrawlGame.loadingSave && saveFile != null && saveFile.post_combat;
+            if (__instance.nextRoom != null && !isLoadingPostCombatSave && AnkiStudyBreak.numCardsToStudy>0) {
+                int baseline = AnkiConnectRequest.getCardsStudied();
+                if((__instance.nextRoom.room instanceof EventRoom)
+                       || (__instance.nextRoom.room instanceof RestRoom)
+                       || (__instance.nextRoom.room instanceof MonsterRoom)
+                        || (__instance.nextRoom.room instanceof ShopRoom)
+                        || (__instance.nextRoom.room instanceof TreasureRoom)) {
+                    CardGroup group = new CardGroup(CardGroup.CardGroupType.UNSPECIFIED);
+                   AbstractCard card = new YesStudied(baseline, AnkiStudyBreak.numCardsToStudy);
+                   group.addToBottom(card);
+                  int count = 0;
+                   __instance.gridSelectScreen.open(group, 1, "", false,
+                           false,
+                          false,
+                          false);
+                }
             }
+        }
+        else {
+            AnkiStudyBreak.studyIntervalPos ++;
         }
     }
 }

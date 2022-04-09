@@ -55,6 +55,10 @@ public class AnkiStudyBreak implements
     public static final String NUM_CARDS_TO_STUDY_SETTINGS = "numCardsToStudy";
     public static int numCardsToStudy = 10;
 
+    public static int studyInterval = 1; // do a study break every this many rooms
+    public static final String STUDY_INTERVAL_SETTINGS = "studyInterval";
+    public static int studyIntervalPos = 0;
+
     //This is for the in-game mod settings panel.
     private static final String MODNAME = "Anki Study Break";
     private static final String AUTHOR = "nymvaline"; // And pretty soon - You!
@@ -93,6 +97,7 @@ public class AnkiStudyBreak implements
         // These are default values that _should_ be overwritten by the saved config.
         ankiStudyBreakDefaultSettings.setProperty(ANKICONNECT_URL_SETTINGS, "http://127.0.0.1:8765");
         ankiStudyBreakDefaultSettings.setProperty(NUM_CARDS_TO_STUDY_SETTINGS, "10");
+        ankiStudyBreakDefaultSettings.setProperty(STUDY_INTERVAL_SETTINGS, "1");
         try {
             SpireConfig config = new SpireConfig("ankiStudyBreak", "ankiStudyBreakConfig", ankiStudyBreakDefaultSettings);
             // the "fileName" parameter is the name of the file MTS will create where it will save our setting.
@@ -102,6 +107,7 @@ public class AnkiStudyBreak implements
             if(numCardsToStudy == 0) {
                 numCardsToStudy = 10;
             }
+            studyInterval = config.getInt(STUDY_INTERVAL_SETTINGS);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -191,6 +197,27 @@ public class AnkiStudyBreak implements
                     }
                 });
 
+            ModMinMaxSlider studyIntervalSlider = new ModMinMaxSlider("Number of floors between breaks",
+                    350.0f,
+                    600.0f,
+                    1,
+                    16,
+                    studyInterval,
+                    "%.0f",
+                    settingsPanel,
+                    (slider) -> {
+                        studyInterval = Math.round(slider.getValue());
+                        try {
+                            // And based on that boolean, set the settings and save them
+                            SpireConfig config = new SpireConfig("ankiStudyBreak", "ankiStudyBreakConfig", ankiStudyBreakDefaultSettings);
+                            config.setInt(STUDY_INTERVAL_SETTINGS, studyInterval);
+                            config.save();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+            );
+
             AnkiConnectSetUrl urlReceiver = new AnkiConnectSetUrl();
             ModLabeledToggleButton setAnkiConnectUrl = new ModLabeledToggleButton(
                     "URL is only accurate if toggle is off. Current URL: " + ankiConnectUrlString,
@@ -229,6 +256,8 @@ public class AnkiStudyBreak implements
 
                         numCardsToStudySlider.setValue(10);
                         numCardsToStudy = 10;
+                        studyIntervalSlider.setValue(1);
+                        studyInterval = 1;
                         if(setAnkiConnectUrl.toggle.enabled) {
                             setAnkiConnectUrl.toggle.toggle();
                         }
@@ -238,6 +267,7 @@ public class AnkiStudyBreak implements
                             SpireConfig config = new SpireConfig("ankiStudyBreak", "ankiStudyBreakConfig", ankiStudyBreakDefaultSettings);
                             config.setString(ANKICONNECT_URL_SETTINGS, ankiConnectUrlString);
                             config.setInt(NUM_CARDS_TO_STUDY_SETTINGS, numCardsToStudy);
+                            config.setInt(STUDY_INTERVAL_SETTINGS, studyInterval);
                             config.save();
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -245,6 +275,7 @@ public class AnkiStudyBreak implements
                     });
             settingsPanel.addUIElement(setAnkiConnectUrl); // Add the button to the settings panel. Button is a go.
             settingsPanel.addUIElement(numCardsToStudySlider);
+            settingsPanel.addUIElement(studyIntervalSlider);
             settingsPanel.addUIElement(resetButton);
 
         } catch (Exception e) {

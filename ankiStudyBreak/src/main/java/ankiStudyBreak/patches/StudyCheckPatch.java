@@ -36,6 +36,9 @@ public class StudyCheckPatch {
                 }
                 else {
                     AnkiStudyBreak.studyIntervalPos++;
+                    if(AnkiStudyBreak.useRandStudyInterval) {
+                        AnkiStudyBreak.randomizeStudyInterval();
+                    }
                 }
                 AbstractDungeon.gridSelectScreen.selectedCards.clear();
             }

@@ -24,6 +24,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Properties;
+import java.util.Random;
 
 /*
  * With that out of the way:
@@ -46,6 +47,9 @@ public class AnkiStudyBreak implements
     public static final Logger logger = LogManager.getLogger(AnkiStudyBreak.class.getName());
     private static String modID;
 
+    private static int randStudyInterval = 1; // This is accessed by calcStudyInterval.
+    public static int studyIntervalPos = 0;
+
     // Mod-settings settings.
     public static Properties ankiStudyBreakDefaultSettings = new Properties();
     public static final String ANKICONNECT_URL_SETTINGS = "ankiconnectUrl";
@@ -57,7 +61,9 @@ public class AnkiStudyBreak implements
 
     public static int studyInterval = 1; // do a study break every this many rooms
     public static final String STUDY_INTERVAL_SETTINGS = "studyInterval";
-    public static int studyIntervalPos = 0;
+
+    public static boolean useRandStudyInterval = false;
+    public static final String USE_RAND_STUDY_INTERVAL_SETTINGS = "useRandStudyInterval";
 
     //This is for the in-game mod settings panel.
     private static final String MODNAME = "Anki Study Break";
@@ -98,19 +104,24 @@ public class AnkiStudyBreak implements
         ankiStudyBreakDefaultSettings.setProperty(ANKICONNECT_URL_SETTINGS, "http://127.0.0.1:8765");
         ankiStudyBreakDefaultSettings.setProperty(NUM_CARDS_TO_STUDY_SETTINGS, "10");
         ankiStudyBreakDefaultSettings.setProperty(STUDY_INTERVAL_SETTINGS, "1");
+        ankiStudyBreakDefaultSettings.setProperty(USE_RAND_STUDY_INTERVAL_SETTINGS, "false");
         try {
             SpireConfig config = new SpireConfig("ankiStudyBreak", "ankiStudyBreakConfig", ankiStudyBreakDefaultSettings);
             // the "fileName" parameter is the name of the file MTS will create where it will save our setting.
             config.load(); // Load the setting and set the boolean to equal it
             ankiConnectUrlString = config.getString(ANKICONNECT_URL_SETTINGS);
             numCardsToStudy = config.getInt(NUM_CARDS_TO_STUDY_SETTINGS);
-            if(numCardsToStudy == 0) {
-                numCardsToStudy = 10;
-            }
             studyInterval = config.getInt(STUDY_INTERVAL_SETTINGS);
+            useRandStudyInterval = config.getBool(USE_RAND_STUDY_INTERVAL_SETTINGS);
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        // These settings are not loaded from config, but need to be adjusted on launching the game.
+        if(numCardsToStudy == 0) {
+            numCardsToStudy = 10;
+        }
+        randStudyInterval = 1; // resets to 1 on re-launching the game, because we don't save this.
 
         logger.info("Done adding mod settings");
         
@@ -215,6 +226,32 @@ public class AnkiStudyBreak implements
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
+                        randStudyInterval = 1;
+                    }
+            );
+
+            ModLabeledToggleButton useRandStudyIntervalButton = new ModLabeledToggleButton(
+                    "Randomize number of floors between breaks, using slider value as max.",
+                    800.0f,
+                    600.0f,
+                    Settings.CREAM_COLOR,
+                    FontHelper.charDescFont, // Position (trial and error it), color, font
+                    useRandStudyInterval, //Boolean it uses
+                    settingsPanel, // The mod panel in which this button will be in
+                    (label) -> {},
+                    (button) -> {
+                        useRandStudyInterval = button.enabled;
+                        try {
+                            // And based on that boolean, set the settings and save them
+                            SpireConfig config = new SpireConfig("ankiStudyBreak", "ankiStudyBreakConfig", ankiStudyBreakDefaultSettings);
+                            config.setBool(USE_RAND_STUDY_INTERVAL_SETTINGS, useRandStudyInterval);
+                            config.save();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        if(button.enabled) {
+                            randStudyInterval = 1;
+                        }
                     }
             );
 
@@ -258,6 +295,8 @@ public class AnkiStudyBreak implements
                         numCardsToStudy = 10;
                         studyIntervalSlider.setValue(1);
                         studyInterval = 1;
+                        randStudyInterval = 1;
+                        useRandStudyInterval = false;
                         if(setAnkiConnectUrl.toggle.enabled) {
                             setAnkiConnectUrl.toggle.toggle();
                         }
@@ -268,14 +307,18 @@ public class AnkiStudyBreak implements
                             config.setString(ANKICONNECT_URL_SETTINGS, ankiConnectUrlString);
                             config.setInt(NUM_CARDS_TO_STUDY_SETTINGS, numCardsToStudy);
                             config.setInt(STUDY_INTERVAL_SETTINGS, studyInterval);
+                            config.setBool(USE_RAND_STUDY_INTERVAL_SETTINGS, useRandStudyInterval);
                             config.save();
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
+
+                        logger.info("Anki Study Break options were reset");
                     });
             settingsPanel.addUIElement(setAnkiConnectUrl); // Add the button to the settings panel. Button is a go.
             settingsPanel.addUIElement(numCardsToStudySlider);
             settingsPanel.addUIElement(studyIntervalSlider);
+            settingsPanel.addUIElement(useRandStudyIntervalButton);
             settingsPanel.addUIElement(resetButton);
 
         } catch (Exception e) {
@@ -349,5 +392,17 @@ public class AnkiStudyBreak implements
             language = "eng";
         }
         return language;
+    }
+
+    // ================ /RANDOM STUDY INTERVAL/ ===================
+    public static int calcStudyInterval() {
+        if(useRandStudyInterval) {
+            return randStudyInterval;
+        }
+        return studyInterval;
+    }
+    public static void randomizeStudyInterval() {
+        Random random = new Random();
+        randStudyInterval = random.nextInt(studyInterval)+1;
     }
 }

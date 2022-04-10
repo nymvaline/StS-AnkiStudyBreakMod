@@ -23,7 +23,7 @@ import ankiStudyBreak.util.AnkiConnectRequest;
 // StudyCheckPatch triggers when the special card is selected, and will continue to trigger when it's selected.
 public class StudyPatch {
     public static void Postfix(AbstractDungeon __instance, SaveFile saveFile) {
-        if(AnkiStudyBreak.studyIntervalPos >= AnkiStudyBreak.studyInterval) {
+        if(AnkiStudyBreak.studyIntervalPos >= AnkiStudyBreak.calcStudyInterval()) {
             AnkiStudyBreak.studyIntervalPos = 0;
         }
         if(AnkiStudyBreak.studyIntervalPos == 0) {

@@ -1,4 +1,5 @@
 package ankiStudyBreak.cards;
+import basemod.AutoAdd;
 import basemod.abstracts.CustomCard;
 import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.characters.AbstractPlayer;
@@ -12,6 +13,7 @@ import org.apache.logging.log4j.Logger;
 
 import static ankiStudyBreak.AnkiStudyBreak.makeCardPath;
 
+@AutoAdd.Ignore
 public class YesStudied extends CustomCard{
     public static final Logger logger = LogManager.getLogger("YesStudied");
 
